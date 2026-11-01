@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zion Reports</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Zion Reports">
+<meta name="theme-color" content="#3D7A33">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    --bg: #F7F5F0; --card: #FFFFFF; --ink: #2E2A25; --muted: #7A7369; --line: #E3D9CC;
+    --accent: #3D7A33; --accent-dark: #32672A; --accent-light: #E8F2DC; --orange: #BE5834; --bad: #B3261E;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background: var(--card); border-bottom: 4px solid var(--accent); }
+  header img { height: 44px; }
+  header h1 { margin: 0; font-size: 22px; color: var(--accent); }
+  header .data { margin-left: auto; text-align: right; font-size: 13px; color: var(--muted); }
+  header .data b { color: var(--ink); font-weight: 600; }
+  .stale { color: var(--orange) !important; }
+  main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .cols { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+  .cols > * { min-width: 0; }
+  @media (max-width: 899px) { .cols { grid-template-columns: 1fr; } }
+  h2 { margin: 0 0 10px; font-size: 19px; }
+  label.f { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  select, input[type=text], input[type=date], input[type=search] {
+    width: 100%; font: inherit; font-size: 16px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: #FBFAF7; color: var(--ink); min-height: 44px; -webkit-appearance: none; appearance: none; }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 30px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .two label.f { margin-top: 6px; }
+  button { font: inherit; font-size: 16px; border-radius: 8px; border: 1px solid var(--line); background: #FBFAF7;
+    color: var(--ink); padding: 10px 14px; min-height: 44px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:active { background: var(--accent-dark); }
+  button.big { width: 100%; font-size: 18px; padding: 14px; }
+  button:disabled { opacity: .45; }
+  .quick { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+  .quick button { padding: 6px 12px; min-height: 36px; font-size: 14px; }
+  .ticks { max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line);
+    border-radius: 8px; padding: 4px 10px; background: #FBFAF7; }
+  .ticks label, .inc label { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 15px; }
+  input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+  .inc { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .row > * { flex: 1; }
+  .rep-title { font-size: 22px; color: var(--accent); font-weight: 700; margin: 0; }
+  .rep-cap, .rep-note { color: var(--muted); font-size: 14px; margin: 4px 0 10px; }
+  .tablewrap { overflow: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { position: sticky; top: 0; background: var(--accent); color: #fff; text-align: left; padding: 7px 8px; white-space: nowrap; }
+  td { padding: 6px 8px; border-bottom: 1px solid #EEE8DF; vertical-align: top; }
+  .r { text-align: right; white-space: nowrap; }
+  tr.total td { background: var(--accent-light); font-weight: 700; }
+  .ready { display: none; background: var(--accent-light); border: 1px solid #C9DDB5; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .ready.show { display: block; }
+  .ready p { margin: 0 0 10px; font-weight: 600; word-break: break-word; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .welcome ol { padding-left: 22px; line-height: 1.6; }
+  .hidden { display: none !important; }
+  .overlay { position: fixed; inset: 0; background: rgba(30, 28, 25, .45); display: flex; align-items: center;
+    justify-content: center; padding: 16px; z-index: 10; }
+  .modal { background: var(--card); border-radius: 12px; padding: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal ol { padding-left: 22px; line-height: 1.6; margin: 8px 0 16px; }
+  .msg { padding: 10px 12px; border-radius: 8px; margin: 10px 0; font-size: 15px; }
+  .msg.bad { background: #FBE9E7; color: var(--bad); }
+  .msg.good { background: var(--accent-light); color: var(--accent-dark); }
+  #code { font-size: 26px; letter-spacing: 3px; text-transform: uppercase; text-align: center; font-weight: 600; }
+  .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: s .8s linear infinite; vertical-align: -3px; margin-right: 6px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 4px 16px calc(16px + env(safe-area-inset-bottom)); }
+  footer button { font-size: 12px; min-height: 0; padding: 4px 8px; background: none; border: none; color: var(--muted); text-decoration: underline; }
+</style>
+</head>
+<body>
+<header>
+  <img src="logo.png" alt="">
+  <h1>Zion Reports</h1>
+  <div class="data" id="dataInfo">No data yet</div>
+</header>
+
+<main>
+  <div class="card welcome hidden" id="welcome">
+    <h2>Welcome</h2>
+    <p>This app makes the clinic's reports as PDFs to send by email or WhatsApp. It needs a copy of the data from the laptop first:</p>
+    <ol>
+      <li>On the laptop, open Zion Clinic Finance and press <b>Send to tablet</b>.</li>
+      <li>On this iPad, open the <b>Camera</b>, point it at the square code on the laptop, tap the link, then tap <b>Download</b>.</li>
+      <li>Come back here, tap <b>Get data from laptop</b> and choose the downloaded file.</li>
+    </ol>
+    <button class="primary big" data-act="import">Get data from laptop</button>
+  </div>
+
+  <div class="cols hidden" id="app">
+    <div class="card">
+      <h2>Report</h2>
+      <select id="kind"></select>
+
+      <div id="personRow" class="hidden">
+        <label class="f" for="person">Name (type part of a name, or leave blank for everyone)</label>
+        <input type="text" id="person" list="names" autocomplete="off">
+        <datalist id="names"></datalist>
+      </div>
+      <div id="dxRow" class="hidden">
+        <label class="f" for="dx">Diagnosis (type part of one; blank = all)</label>
+        <input type="text" id="dx" list="dxNames" autocomplete="off">
+        <datalist id="dxNames"></datalist>
+      </div>
+      <div id="immRow" class="hidden">
+        <label class="f" for="immLoc">Location</label>
+        <select id="immLoc"></select>
+        <label class="f" for="immProg">Programme</label>
+        <select id="immProg"></select>
+      </div>
+      <div id="eyeRow" class="hidden">
+        <label class="f" for="eyeDist">District</label>
+        <select id="eyeDist"></select>
+      </div>
+      <div id="hivRow" class="hidden">
+        <label class="f" for="hivLoc">Location</label>
+        <select id="hivLoc"></select>
+      </div>
+
+      <label class="f" for="preset">Dates</label>
+      <select id="preset"></select>
+      <div class="two">
+        <div><label class="f" for="from">From</label><input type="date" id="from"></div>
+        <div><label class="f" for="to">To</label><input type="date" id="to"></div>
+      </div>
+
+      <label class="f" id="ticksLabel">Categories (tick one or more)</label>
+      <div class="quick" id="quick">
+        <button data-q="all">All</button><button data-q="rev">Revenue</button><button data-q="exp">Expenses</button><button data-q="none">None</button>
+      </div>
+      <div class="ticks" id="ticks"></div>
+
+      <label class="f" for="search">Search words (optional)</label>
+      <input type="search" id="search" autocomplete="off">
+
+      <label class="f">Include in the PDF</label>
+      <div class="inc">
+        <label><input type="checkbox" id="incTable" checked> Table</label>
+        <label><input type="checkbox" id="incPies" checked> Pie charts</label>
+        <label><input type="checkbox" id="incBars" checked> <span id="barsLabel">Bar graph by month</span></label>
+        <label><input type="checkbox" id="incLine"> <span id="lineLabel">Balance line graph</span></label>
+      </div>
+      <label class="f" for="page">Page</label>
+      <select id="page">
+        <option value="auto">Automatic</option><option value="portrait">Portrait (tall)</option><option value="landscape">Landscape (wide)</option>
+      </select>
+
+      <div class="row">
+        <button data-act="preview">Show on screen</button>
+        <button class="primary" data-act="pdf">Make PDF</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="ready" id="ready">
+        <p id="readyName"></p>
+        <div class="row" style="margin-top:0">
+          <button class="primary" data-act="share">Send / share…</button>
+          <button data-act="open">Open PDF</button>
+        </div>
+        <div class="muted" style="margin-top:8px">Send / share opens the iPad's share menu: Mail, WhatsApp, Save to Files or Print.</div>
+      </div>
+      <div class="card" id="result">
+        <p class="muted" id="resultEmpty">Choose a report and press <b>Show on screen</b> or <b>Make PDF</b>.</p>
+        <div id="resultBody" class="hidden">
+          <p class="rep-title" id="repTitle"></p>
+          <p class="rep-cap" id="repCap"></p>
+          <div class="tablewrap"><table id="repTable"></table></div>
+          <p class="rep-cap" id="repMore"></p>
+          <p class="rep-note" id="repNote"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span id="version"></span> · <button data-act="import">Get data from laptop</button> · <button data-act="forget">Remove data from this iPad</button>
+</footer>
+
+<div class="overlay hidden" id="importBox">
+  <div class="modal">
+    <h2>Get data from laptop</h2>
+    <ol>
+      <li>On the laptop: press <b>Send to tablet</b>.</li>
+      <li>On this iPad: open the <b>Camera</b>, point it at the square code, tap the link, then tap <b>Download</b>.</li>
+      <li>Then tap the button below and choose the file (it is in <b>Downloads</b>, named "Zion data …").</li>
+    </ol>
+    <input type="file" id="file" class="hidden">
+    <div id="codeRow" class="hidden">
+      <label class="f" for="code">Tablet code (shown in the laptop's Send to tablet window)</label>
+      <input type="text" id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH">
+    </div>
+    <div id="importMsg"></div>
+    <div class="row">
+      <button data-act="closeImport">Cancel</button>
+      <button class="primary" id="chooseBtn" data-act="choose">Choose the downloaded file</button>
+      <button class="primary hidden" id="unlockBtn" data-act="unlock">Open the data</button>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="reports.js"></script>
+<script src="pdf.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
